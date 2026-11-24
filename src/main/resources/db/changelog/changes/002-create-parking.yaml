@@ -1,0 +1,56 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-create-parking
+      author: instant-system
+      changes:
+        - createTable:
+            tableName: parking
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: source_id
+                  type: int
+              - column:
+                  name: external_id
+                  type: varchar(64)
+                  constraints:
+                    unique: true
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: capacity
+                  type: int
+              - column:
+                  name: available_spaces
+                  type: int
+              - column:
+                  name: occupancy_rate
+                  type: double
+              - column:
+                  name: latitude
+                  type: double
+              - column:
+                  name: longitude
+                  type: double
+              - column:
+                  name: last_updated_base
+                  type: timestamp
+              - column:
+                  name: source_updated_at
+                  type: timestamp
+              - column:
+                  name: city_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_parking_city
+                    references: city(id)
