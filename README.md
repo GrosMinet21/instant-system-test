@@ -6,10 +6,18 @@ API REST Spring Boot exposant la disponibilité en temps réel des parkings à p
 
 ---
 
+## Structure
+
+```
+parking-core/     → domaine partagé (entités, repositories, DTOs, ParkingSyncService)
+parking-poitiers/ → intégration Poitiers (Feign, mapper, service) — dépend de parking-core
+parking-app/      → application Spring Boot (REST, cron, config, Liquibase) — dépend des deux
+```
+
 ## Lancement rapide
 
 ```bash
-mvn spring-boot:run
+mvn spring-boot:run -pl parking-app --also-make
 ```
 
 L'application démarre sur le port **8080** avec une base PostgreSQL embarquée (Zonky).  
@@ -91,8 +99,8 @@ parking/
 ## Problèmes identifiés non traités
 
 - **Authentification / sécurité** : l'API est publique. En production, il faudrait un mécanisme d'authentification (API key, OAuth2).
-- **Pagination** : pour des zones denses avec de nombreux parkings, une pagination serait nécessaire.
+- **Pagination** : pour des zones denses, une pagination serait nécessaire. Le filtre Haversine étant appliqué en mémoire Java après `SELECT *`, la pagination ne pourrait pas réduire le volume de données lues en base — il faudrait pousser le filtre géographique côté PostgreSQL (via PostGIS ou une bounding-box SQL) pour que la pagination soit réellement efficace.
 - **CityName en configuration** : aujourd'hui ajouter une ville nécessite d'étendre l'enum et d'écrire du code. Une approche config-driven (sources déclarées dans `application.yml`) serait plus flexible, au prix d'une perte de typage fort.
 - **Monitoring** : Spring Actuator est présent mais aucune alerte n'est configurée sur les échecs de sync.
 - **Race condition sur le cron** : en déploiement multi-instance, deux nœuds pourraient synchroniser en parallèle. ShedLock (`@ScheduledLock`) réglerait ce point.
-- **Multi-module Maven** : le package `poitiers/` est isolé architecturalement mais pas au niveau du build. Un module Maven dédié renforcerait le découplage si plusieurs équipes travaillent sur des sources différentes.
+- **Multi-module Maven** : ✅ implémenté — `parking-core`, `parking-poitiers`, `parking-app`.
