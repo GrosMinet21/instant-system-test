@@ -3,7 +3,8 @@ package com.instantsystem.test.parking.poitiers.service;
 import com.instantsystem.test.parking.database.entity.City;
 import com.instantsystem.test.parking.database.entity.Parking;
 import com.instantsystem.test.parking.database.repository.CityRepository;
-import com.instantsystem.test.parking.database.repository.ParkingRepository;
+import com.instantsystem.test.parking.database.repository.ParkingWriteRepository;
+import com.instantsystem.test.parking.dto.CityName;
 import com.instantsystem.test.parking.poitiers.PoitiersClient;
 import com.instantsystem.test.parking.poitiers.dto.PoitiersParkingDto;
 import com.instantsystem.test.parking.poitiers.dto.PoitiersParkingListResponse;
@@ -15,20 +16,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class PoitiersParkingsService {
+public class PoitiersParkingsService implements ParkingSyncService{
     private static final Logger log = LoggerFactory.getLogger(PoitiersParkingsService.class);
-    private static final String CITY_NAME = "Poitiers";
+    private static final CityName CITY_NAME = CityName.POITIERS;
 
     private final PoitiersParkingMapper poitiersParkingMapper = Mappers.getMapper(PoitiersParkingMapper.class);
 
     private final PoitiersClient poitiersClient;
-    private final ParkingRepository parkingRepository;
+    private final ParkingWriteRepository parkingRepository;
     private final CityRepository cityRepository;
 
 
     public PoitiersParkingsService(PoitiersClient poitiersClient,
                                    CityRepository cityRepository,
-                                   ParkingRepository parkingRepository) {
+                                   ParkingWriteRepository parkingRepository) {
         this.poitiersClient = poitiersClient;
         this.cityRepository = cityRepository;
         this.parkingRepository = parkingRepository;

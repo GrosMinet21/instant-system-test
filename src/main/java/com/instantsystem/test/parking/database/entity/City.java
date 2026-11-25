@@ -1,7 +1,10 @@
 package com.instantsystem.test.parking.database.entity;
 
+import com.instantsystem.test.parking.dto.CityName;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -13,8 +16,9 @@ public class City {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column
-    private String name;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, unique = true)
+    private CityName name;
 
     public Long getId() {
         return id;
@@ -24,11 +28,11 @@ public class City {
         this.id = id;
     }
 
-    public String getName() {
+    public CityName getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(CityName name) {
         this.name = name;
     }
 }

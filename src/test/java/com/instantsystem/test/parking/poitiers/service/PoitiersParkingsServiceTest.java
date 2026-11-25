@@ -3,7 +3,8 @@ package com.instantsystem.test.parking.poitiers.service;
 import com.instantsystem.test.parking.database.entity.City;
 import com.instantsystem.test.parking.database.entity.Parking;
 import com.instantsystem.test.parking.database.repository.CityRepository;
-import com.instantsystem.test.parking.database.repository.ParkingRepository;
+import com.instantsystem.test.parking.database.repository.ParkingWriteRepository;
+import com.instantsystem.test.parking.dto.CityName;
 import com.instantsystem.test.parking.poitiers.PoitiersClient;
 import com.instantsystem.test.parking.poitiers.dto.PoitiersParkingDto;
 import com.instantsystem.test.parking.poitiers.dto.PoitiersParkingListResponse;
@@ -31,7 +32,7 @@ class PoitiersParkingsServiceTest {
     @Mock
     private CityRepository cityRepository;
     @Mock
-    private ParkingRepository parkingRepository;
+    private ParkingWriteRepository parkingRepository;
 
     @InjectMocks
     private PoitiersParkingsService service;
@@ -39,6 +40,12 @@ class PoitiersParkingsServiceTest {
     private PoitiersParkingDto dto(String docId, String nom) {
         return new PoitiersParkingDto(3, nom, 320, 50, 84.3,
                 "46.5, 0.3", null, null, null, docId, 1L, 1, null);
+    }
+
+    private City poitiersCity() {
+        City city = new City();
+        city.setName(CityName.POITIERS);
+        return city;
     }
 
     @Test
@@ -63,9 +70,8 @@ class PoitiersParkingsServiceTest {
     void syncParkings_createsCityWhenAbsent_andInsertsNewParking() {
         when(poitiersClient.getParkings())
                 .thenReturn(new PoitiersParkingListResponse(1, List.of(dto("doc-1", "THEATRE"))));
-        when(cityRepository.findByName("Poitiers")).thenReturn(Optional.empty());
-        City saved = new City();
-        saved.setName("Poitiers");
+        when(cityRepository.findByName(CityName.POITIERS)).thenReturn(Optional.empty());
+        City saved = poitiersCity();
         when(cityRepository.save(any(City.class))).thenReturn(saved);
         when(parkingRepository.findByExternalId("doc-1")).thenReturn(Optional.empty());
 
@@ -74,19 +80,16 @@ class PoitiersParkingsServiceTest {
         verify(cityRepository).save(any(City.class));
         ArgumentCaptor<Parking> captor = ArgumentCaptor.forClass(Parking.class);
         verify(parkingRepository).save(captor.capture());
-        Parking persisted = captor.getValue();
-        assertThat(persisted.getId()).isNull(); // nouveau -> pas d'id réutilisé
-        assertThat(persisted.getName()).isEqualTo("THEATRE");
-        assertThat(persisted.getCity()).isEqualTo(saved);
+        assertThat(captor.getValue().getId()).isNull();
+        assertThat(captor.getValue().getName()).isEqualTo("THEATRE");
+        assertThat(captor.getValue().getCity()).isEqualTo(saved);
     }
 
     @Test
     void syncParkings_reusesExistingId_whenParkingAlreadyPresent() {
         when(poitiersClient.getParkings())
                 .thenReturn(new PoitiersParkingListResponse(1, List.of(dto("doc-1", "THEATRE"))));
-        City city = new City();
-        city.setName("Poitiers");
-        when(cityRepository.findByName("Poitiers")).thenReturn(Optional.of(city));
+        when(cityRepository.findByName(CityName.POITIERS)).thenReturn(Optional.of(poitiersCity()));
         Parking existing = new Parking();
         existing.setId(42L);
         when(parkingRepository.findByExternalId("doc-1")).thenReturn(Optional.of(existing));
@@ -95,6 +98,6 @@ class PoitiersParkingsServiceTest {
 
         ArgumentCaptor<Parking> captor = ArgumentCaptor.forClass(Parking.class);
         verify(parkingRepository).save(captor.capture());
-        assertThat(captor.getValue().getId()).isEqualTo(42L); // upsert -> id réutilisé
+        assertThat(captor.getValue().getId()).isEqualTo(42L);
     }
 }

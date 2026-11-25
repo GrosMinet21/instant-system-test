@@ -10,19 +10,11 @@ import org.springframework.context.annotation.Primary;
 import javax.sql.DataSource;
 import java.io.IOException;
 
-/**
- * Démarre une instance PostgreSQL embarquée (binaire réel via Zonky) au lancement
- * de l'application et l'expose comme DataSource primaire. L'instance est éphémère :
- * elle est détruite à l'arrêt de l'application, les données ne sont pas persistées.
- * Activée par défaut ; désactivable avec {@code embedded.postgres.enabled=false}
- * pour brancher un vrai PostgreSQL (prod) via les propriétés spring.datasource.*.
- */
 @Configuration
 @ConditionalOnProperty(name = "embedded.postgres.enabled", havingValue = "true", matchIfMissing = true)
 public class EmbeddedPostgresConfig {
 
-    /** Port fixe pour pouvoir s'y connecter (psql/DBeaver), configurable via application.properties. */
-    @Value("${embedded.postgres.port:5432}")
+    @Value("${embedded.postgres.port}")
     private int port;
 
     @Bean(destroyMethod = "close")

@@ -6,16 +6,10 @@ import com.instantsystem.test.parking.dto.ParkingDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import java.util.List;
-
-/**
- * Mappe l'entité {@link Parking} vers sa représentation d'API {@link ParkingDto}.
- */
 @Mapper(config = MapStructConfig.class)
 public interface ParkingMapper {
 
-    @Mapping(target = "cityName", source = "city.name")
-    ParkingDto toDto(Parking parking);
-
-    List<ParkingDto> toDtos(List<Parking> parkings);
+    @Mapping(target = "city", source = "parking.city.name")
+    @Mapping(target = "distanceMeters", source = "distanceMeters")
+    ParkingDto toDto(Parking parking, Double distanceMeters);
 }

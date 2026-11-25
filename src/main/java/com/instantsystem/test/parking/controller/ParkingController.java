@@ -2,15 +2,19 @@ package com.instantsystem.test.parking.controller;
 
 import com.instantsystem.test.parking.dto.ParkingDto;
 import com.instantsystem.test.parking.service.ParkingService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/cities/{city}/parkings")
+@RequestMapping("/parkings")
+@Tag(name = "Parkings", description = "Real-time parking availability")
 public class ParkingController {
 
     private final ParkingService parkingService;
@@ -19,11 +23,13 @@ public class ParkingController {
         this.parkingService = parkingService;
     }
 
-    /**
-     * Liste tous les parkings rattachés à la ville donnée.
-     */
     @GetMapping
-    public List<ParkingDto> getParkingsByCity(@PathVariable String city) {
-        return parkingService.getParkings(city);
+    @Operation(summary = "List nearby parkings",
+            description = "Returns parkings within radiusKm of the given position, sorted by distance.")
+    public List<ParkingDto> getParkings(
+            @Parameter(description = "User latitude") @RequestParam double lat,
+            @Parameter(description = "User longitude") @RequestParam double lon,
+            @Parameter(description = "Search radius in kilometres") @RequestParam double radiusKm) {
+        return parkingService.getParkings(lat, lon, radiusKm);
     }
 }
