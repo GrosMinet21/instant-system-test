@@ -25,7 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class PoitiersParkingsServiceTest {
+class PoitiersParkingSyncServiceTest {
 
     @Mock
     private PoitiersClient poitiersClient;
@@ -35,7 +35,7 @@ class PoitiersParkingsServiceTest {
     private ParkingWriteRepository parkingRepository;
 
     @InjectMocks
-    private PoitiersParkingsService service;
+    private PoitiersParkingSyncService service;
 
     private PoitiersParkingDto dto(String docId, String nom) {
         return new PoitiersParkingDto(3, nom, 320, 50, 84.3,

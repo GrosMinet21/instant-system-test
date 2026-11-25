@@ -4,9 +4,9 @@ import org.mapstruct.MapperConfig;
 import org.mapstruct.ReportingPolicy;
 
 /**
- * Configuration MapStruct partagée par tous les mappers du projet.
- * {@code unmappedTargetPolicy = ERROR} fait échouer la compilation si une
- * propriété cible n'est pas mappée.
+ * Shared MapStruct configuration for all mappers in the project.
+ * {@code unmappedTargetPolicy = ERROR} causes compilation to fail if a
+ * target property is not mapped.
  */
 @MapperConfig(unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface MapStructConfig {

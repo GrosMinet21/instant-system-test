@@ -33,21 +33,21 @@ class PoitiersParkingDtoDeserializationTest {
 
         PoitiersParkingDto theatre = response.results().get(0);
         assertEquals(3, theatre.id());
-        assertEquals("THEATRE", theatre.nom());
-        assertEquals(320, theatre.capacite());
-        assertEquals(50, theatre.places());
-        assertEquals(84.375, theatre.tauxDoccupation());
+        assertEquals("THEATRE", theatre.name());
+        assertEquals(320, theatre.capacity());
+        assertEquals(50, theatre.availableSpaces());
+        assertEquals(84.375, theatre.occupancyRate());
         assertEquals("46.58383455409422, 0.33779491061805567", theatre.geopoint());
         assertEquals(2730275881012141L, theatre.internalIndex());
-        assertEquals(Instant.parse("2026-11-24T16:35:36.000Z"), theatre.derniereMiseAJourBase());
+        assertEquals(Instant.parse("2026-11-24T16:35:36.000Z"), theatre.lastUpdatedBase());
         assertEquals(Instant.parse("2026-11-24T16:29:24.206Z"), theatre.updatedAt());
         assertEquals("xEtNIKJ6L7QKGMa2MLRhZ", theatre.documentId());
         assertNull(theatre.score());
 
-        // Champs géo absents sur certains parkings -> null, pas d'erreur
+        // Geo fields absent on some parkings -> null, no error
         PoitiersParkingDto gareEffia = response.results().get(1);
-        assertEquals("GARE EFFIA", gareEffia.nom());
+        assertEquals("GARE EFFIA", gareEffia.name());
         assertNull(gareEffia.geopoint());
-        assertNull(gareEffia.infosParkingsGeoPoint());
+        assertNull(gareEffia.altGeoPoint());
     }
 }

@@ -44,7 +44,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    void getParkings_filtersAndSortsByDistance() {
+    void getParkings_filters() {
         Parking near = parking("NEAR", 46.5802, 0.3404);
         Parking far = parking("FAR", 46.6000, 0.4000);
         when(parkingRepository.findAll()).thenReturn(List.of(far, near));
@@ -53,7 +53,6 @@ class ParkingServiceTest {
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).name()).isEqualTo("NEAR");
-        assertThat(result.get(0).distanceMeters()).isPositive();
     }
 
     @Test

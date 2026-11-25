@@ -95,6 +95,7 @@
 					<configuration>
 						<excludes>
 							<exclude>**/InstantSystemApplication.class</exclude>
+							<exclude>**/mapper/*MapperImpl.class</exclude>
 						</excludes>
 					</configuration>
 					<executions>

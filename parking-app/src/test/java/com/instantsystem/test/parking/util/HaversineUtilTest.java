@@ -13,7 +13,7 @@ class HaversineUtilTest {
 
     @Test
     void distanceMeters_knownPoints_isAccurate() {
-        // Paris → Poitiers ≈ 294 km (distance à vol d'oiseau)
+        // Paris → Poitiers ≈ 294 km (straight-line distance)
         double distance = HaversineUtil.distanceMeters(48.8566, 2.3522, 46.5802, 0.3404);
         assertThat(distance).isBetween(290_000.0, 300_000.0);
     }
