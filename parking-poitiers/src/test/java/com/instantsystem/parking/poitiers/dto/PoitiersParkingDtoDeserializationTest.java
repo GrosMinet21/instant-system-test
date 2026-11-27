@@ -38,11 +38,8 @@ class PoitiersParkingDtoDeserializationTest {
         assertEquals(50, theatre.availableSpaces());
         assertEquals(84.375, theatre.occupancyRate());
         assertEquals("46.58383455409422, 0.33779491061805567", theatre.geopoint());
-        assertEquals(2730275881012141L, theatre.internalIndex());
         assertEquals(Instant.parse("2026-11-24T16:35:36.000Z"), theatre.lastUpdatedBase());
         assertEquals(Instant.parse("2026-11-24T16:29:24.206Z"), theatre.updatedAt());
-        assertEquals("xEtNIKJ6L7QKGMa2MLRhZ", theatre.documentId());
-        assertNull(theatre.score());
 
         // Geo fields absent on some parkings -> null, no error
         PoitiersParkingDto gareEffia = response.results().get(1);

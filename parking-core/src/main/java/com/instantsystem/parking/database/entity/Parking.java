@@ -17,10 +17,7 @@ public class Parking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column
-    private Integer sourceId;
-
-    @Column
+    @Column(nullable = false)
     private String externalId;
 
     @Column
@@ -54,14 +51,6 @@ public class Parking {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Integer getSourceId() {
-        return sourceId;
-    }
-
-    public void setSourceId(Integer sourceId) {
-        this.sourceId = sourceId;
     }
 
     public String getExternalId() {

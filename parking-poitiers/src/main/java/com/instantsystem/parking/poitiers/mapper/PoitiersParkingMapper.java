@@ -10,16 +10,18 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 /**
- * Maps a {@link PoitiersParkingDto} (Poitiers API) to the {@link Parking} entity.
- * The {@link City} is provided as a parameter, and the geolocation string
- * ({@code "latitude, longitude"}) is split into separate {@code latitude}/{@code longitude} fields.
+ * Maps a {@link PoitiersParkingDto} (Poitiers API) onto a {@link Parking} entity.
+ * <p>
+ * The entity is updated in place so that the sync can reuse managed entities. The business key is the
+ * Poitiers {@code Id} — the data-fair {@code _id} is regenerated on every dataset refresh and must not be used.
+ * The geolocation string ({@code "latitude, longitude"}) is split into {@code latitude}/{@code longitude};
+ * a missing or malformed value leaves both coordinates {@code null} instead of failing the whole sync.
  */
 @Mapper(config = MapStructConfig.class)
 public interface PoitiersParkingMapper {
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "sourceId", source = "dto.id")
-    @Mapping(target = "externalId", source = "dto.documentId")
+    @Mapping(target = "externalId", source = "dto.id")
     @Mapping(target = "name", source = "dto.name")
     @Mapping(target = "capacity", source = "dto.capacity")
     @Mapping(target = "availableSpaces", source = "dto.availableSpaces")
@@ -29,15 +31,30 @@ public interface PoitiersParkingMapper {
     @Mapping(target = "latitude", ignore = true)
     @Mapping(target = "longitude", ignore = true)
     @Mapping(target = "city", source = "city")
-    Parking toEntity(PoitiersParkingDto dto, City city);
+    void updateEntity(PoitiersParkingDto dto, City city, @MappingTarget Parking parking);
 
     @AfterMapping
     default void mapGeopoint(PoitiersParkingDto dto, @MappingTarget Parking parking) {
+        parking.setLatitude(null);
+        parking.setLongitude(null);
+
         String geo = dto.geopoint() != null ? dto.geopoint() : dto.altGeoPoint();
-        if (geo != null && geo.contains(",")) {
-            String[] parts = geo.split(",", 2);
-            parking.setLatitude(Double.parseDouble(parts[0].trim()));
-            parking.setLongitude(Double.parseDouble(parts[1].trim()));
+        if (geo == null) {
+            return;
+        }
+        String[] parts = geo.split(",");
+        if (parts.length != 2) {
+            return;
+        }
+        try {
+            double latitude = Double.parseDouble(parts[0].trim());
+            double longitude = Double.parseDouble(parts[1].trim());
+            if (Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180) {
+                parking.setLatitude(latitude);
+                parking.setLongitude(longitude);
+            }
+        } catch (NumberFormatException e) {
+            // Malformed coordinates: left null, reported by the sync service.
         }
     }
 }

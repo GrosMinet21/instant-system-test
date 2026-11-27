@@ -11,5 +11,6 @@ public interface ParkingMapper {
 
     @Mapping(target = "city", source = "parking.city.name")
     @Mapping(target = "distanceMeters", source = "distanceMeters")
+    @Mapping(target = "lastUpdated", source = "parking.lastUpdatedBase")
     ParkingDto toDto(Parking parking, Double distanceMeters);
 }
