@@ -23,14 +23,11 @@ public interface PoitiersParkingMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "externalId", source = "dto.id")
     @Mapping(target = "name", source = "dto.name")
-    @Mapping(target = "capacity", source = "dto.capacity")
-    @Mapping(target = "availableSpaces", source = "dto.availableSpaces")
-    @Mapping(target = "occupancyRate", source = "dto.occupancyRate")
-    @Mapping(target = "lastUpdatedBase", source = "dto.lastUpdatedBase")
     @Mapping(target = "sourceUpdatedAt", source = "dto.updatedAt")
+    //handled in afterMapping method
     @Mapping(target = "latitude", ignore = true)
+    //handled in afterMapping method
     @Mapping(target = "longitude", ignore = true)
-    @Mapping(target = "city", source = "city")
     void updateEntity(PoitiersParkingDto dto, City city, @MappingTarget Parking parking);
 
     @AfterMapping

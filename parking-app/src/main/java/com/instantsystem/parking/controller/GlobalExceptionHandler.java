@@ -1,5 +1,6 @@
 package com.instantsystem.parking.controller;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
@@ -21,11 +22,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Override
     protected ResponseEntity<Object> handleHandlerMethodValidationException(HandlerMethodValidationException ex,
-                                                                            HttpHeaders headers,
-                                                                            HttpStatusCode status,
-                                                                            WebRequest request) {
-        String detail = ex.getParameterValidationResults().stream()
-                .flatMap(result -> result.getResolvableErrors().stream()
+                                                                            @NonNull HttpHeaders headers,
+                                                                            @NonNull HttpStatusCode status,
+                                                                            @NonNull WebRequest request) {
+        String detail = ex.getParameterValidationResults()
+                .stream()
+                .flatMap(result -> result.getResolvableErrors()
+                        .stream()
                         .map(error -> result.getMethodParameter().getParameterName() + " " + error.getDefaultMessage()))
                 .collect(Collectors.joining("; "));
         ProblemDetail body = createProblemDetail(ex, status, detail, null, null, request);

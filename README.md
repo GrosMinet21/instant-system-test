@@ -102,10 +102,12 @@ Results are sorted by ascending distance. Each parking entry includes:
   Parkings missing from the payload are deleted; an empty payload is treated as a source failure and the last known
   data is kept. Invalid records (missing id/name, malformed coordinates) are skipped or stored without coordinates
   individually, and each city is synced independently, so one failure never blocks the rest.
-- **No DB connection held during the remote call**: the source is fetched first, then the database is updated in a
-  short transaction (`TransactionTemplate`).
-- **Configurable source**: the Poitiers base URL (`parking.poitiers.url`) and the Feign timeouts (connect 5 s, read
-  10 s) are set in `application.properties`.
+- **No DB connection held during the remote call**: `PoitiersParkingSyncService` fetches the source outside of any
+  transaction, then delegates to `PoitiersParkingWriter`, whose `@Transactional` method updates the database. Two beans
+  rather than two methods of the same class, because Spring's proxy-based `@Transactional` is ignored on self-invocation.
+- **Configurable source**: the full Poitiers endpoint URL (`parking.poitiers.url`) and the Feign timeouts (connect 5 s,
+  read 10 s) are set in `application.properties`. If the source moves but keeps its format (dataset renamed, API
+  version bump, proxy...), only the configuration changes; a different format still requires a new DTO/mapper.
 - **Plugin registry (ParkingSyncService)**: each data source implements `ParkingSyncService`. The generic cron iterates
   over all implementations detected by Spring. Adding a new city means creating a new module/package with its own Feign
   client, mapper and service, and adding a value to the `CityName` enum — the REST layer is untouched.
