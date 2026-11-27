@@ -2,7 +2,7 @@
 
 REST API built with Spring Boot exposing real-time parking availability near a given geographic position.
 
-**Time spent:** ~8 hours
+**Time spent:** ~12 hours
 
 ---
 
