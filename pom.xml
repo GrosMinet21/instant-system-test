@@ -24,17 +24,20 @@
 
 	<properties>
 		<java.version>17</java.version>
-		<spring-cloud.version>2026.0.0</spring-cloud.version>
 		<embedded-postgres.version>2.2.3</embedded-postgres.version>
 		<mapstruct.version>1.6.3</mapstruct.version>
+		<embedded-postgres-binaries.version>18.7.0</embedded-postgres-binaries.version>
+		<springdoc.version>3.2.1</springdoc.version>
+		<jacoco.version>0.8.16</jacoco.version>
 	</properties>
 
 	<dependencyManagement>
 		<dependencies>
+			<!-- PostgreSQL binaries started by Zonky: PostgreSQL 18 (embedded-postgres defaults to 14, out of support) -->
 			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>${spring-cloud.version}</version>
+				<groupId>io.zonky.test.postgres</groupId>
+				<artifactId>embedded-postgres-binaries-bom</artifactId>
+				<version>${embedded-postgres-binaries.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -42,6 +45,21 @@
 				<groupId>org.mapstruct</groupId>
 				<artifactId>mapstruct</artifactId>
 				<version>${mapstruct.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.mapstruct</groupId>
+				<artifactId>mapstruct-processor</artifactId>
+				<version>${mapstruct.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.zonky.test</groupId>
+				<artifactId>embedded-postgres</artifactId>
+				<version>${embedded-postgres.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springdoc</groupId>
+				<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+				<version>${springdoc.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>com.instantsystem</groupId>
@@ -63,11 +81,12 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
 					<configuration>
+						<!-- annotation processor versions come from dependencyManagement -->
+						<annotationProcessorPathsUseDepMgmt>true</annotationProcessorPathsUseDepMgmt>
 						<annotationProcessorPaths>
 							<path>
 								<groupId>org.mapstruct</groupId>
 								<artifactId>mapstruct-processor</artifactId>
-								<version>${mapstruct.version}</version>
 							</path>
 						</annotationProcessorPaths>
 					</configuration>
@@ -75,7 +94,7 @@
 				<plugin>
 					<groupId>org.jacoco</groupId>
 					<artifactId>jacoco-maven-plugin</artifactId>
-					<version>0.8.13</version>
+					<version>${jacoco.version}</version>
 					<configuration>
 						<excludes>
 							<exclude>**/InstantSystemApplication.class</exclude>
