@@ -1,57 +1,49 @@
 package com.instantsystem.parking.poitiers.mapper;
 
 import com.instantsystem.parking.config.MapStructConfig;
-import com.instantsystem.parking.database.entity.City;
-import com.instantsystem.parking.database.entity.Parking;
 import com.instantsystem.parking.poitiers.dto.PoitiersParkingDto;
-import org.mapstruct.AfterMapping;
+import com.instantsystem.parking.sync.ParkingSnapshot;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 
-/**
- * Maps a {@link PoitiersParkingDto} (Poitiers API) onto a {@link Parking} entity.
- * <p>
- * The entity is updated in place so that the sync can reuse managed entities. The business key is the
- * Poitiers {@code Id} — the data-fair {@code _id} is regenerated on every dataset refresh and must not be used.
- * The geolocation string ({@code "latitude, longitude"}) is split into {@code latitude}/{@code longitude};
- * a missing or malformed value leaves both coordinates {@code null} instead of failing the whole sync.
- */
 @Mapper(config = MapStructConfig.class)
 public interface PoitiersParkingMapper {
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "externalId", source = "dto.id")
-    @Mapping(target = "name", source = "dto.name")
-    @Mapping(target = "sourceUpdatedAt", source = "dto.updatedAt")
-    //handled in afterMapping method
-    @Mapping(target = "latitude", ignore = true)
-    //handled in afterMapping method
-    @Mapping(target = "longitude", ignore = true)
-    void updateEntity(PoitiersParkingDto dto, City city, @MappingTarget Parking parking);
+    @Mapping(target = "externalId", source = "id")
+    @Mapping(target = "lastUpdated", source = "updatedAt")
+    @Mapping(target = "latitude", source = "dto", qualifiedByName = "latitude")
+    @Mapping(target = "longitude", source = "dto", qualifiedByName = "longitude")
+    ParkingSnapshot toSnapshot(PoitiersParkingDto dto);
 
-    @AfterMapping
-    default void mapGeopoint(PoitiersParkingDto dto, @MappingTarget Parking parking) {
-        parking.setLatitude(null);
-        parking.setLongitude(null);
+    @Named("latitude")
+    default Double latitude(PoitiersParkingDto dto) {
+        double[] coordinates = coordinates(dto);
+        return coordinates == null ? null : coordinates[0];
+    }
 
+    @Named("longitude")
+    default Double longitude(PoitiersParkingDto dto) {
+        double[] coordinates = coordinates(dto);
+        return coordinates == null ? null : coordinates[1];
+    }
+
+    /**
+     * @return {@code [latitude, longitude]}, or {@code null} if the geopoint is missing or malformed
+     */
+    private static double[] coordinates(PoitiersParkingDto dto) {
         String geo = dto.geopoint() != null ? dto.geopoint() : dto.altGeoPoint();
         if (geo == null) {
-            return;
+            return null;
         }
         String[] parts = geo.split(",");
         if (parts.length != 2) {
-            return;
+            return null;
         }
         try {
-            double latitude = Double.parseDouble(parts[0].trim());
-            double longitude = Double.parseDouble(parts[1].trim());
-            if (Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180) {
-                parking.setLatitude(latitude);
-                parking.setLongitude(longitude);
-            }
+            return new double[]{Double.parseDouble(parts[0].trim()), Double.parseDouble(parts[1].trim())};
         } catch (NumberFormatException e) {
-            // Malformed coordinates: left null, reported by the sync service.
+            return null;
         }
     }
 }

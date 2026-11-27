@@ -10,7 +10,7 @@
 
 	<artifactId>parking-poitiers</artifactId>
 	<name>parking-poitiers</name>
-	<description>Poitiers-specific Feign client, mapper and sync service</description>
+	<description>Poitiers parking source: Feign client, DTOs and mapping to ParkingSnapshot</description>
 
 	<dependencies>
 		<dependency>

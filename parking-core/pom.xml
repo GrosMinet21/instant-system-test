@@ -10,7 +10,7 @@
 
 	<artifactId>parking-core</artifactId>
 	<name>parking-core</name>
-	<description>Domain model, JPA entities, repositories, shared interfaces</description>
+	<description>Domain model, JPA entities, repositories, generic synchronisation and the ParkingSource contract</description>
 
 	<dependencies>
 		<dependency>
@@ -20,6 +20,11 @@
 		<dependency>
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 

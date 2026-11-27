@@ -15,7 +15,7 @@ class PoitiersParkingDtoDeserializationTest {
     @Test
     void deserializes_full_payload() {
         String json = """
-                {"total":9,"results":[
+                {"total":9,"next":"https://data.grandpoitiers.fr/data-fair/api/v1/datasets/abc/lines?size=2&after=1%2C2","results":[
                   {"infos_parkingsgeo_point":"46.58383455409422, 0.33779491061805567","_rand":424281,
                    "_geopoint":"46.58383455409422, 0.33779491061805567","Dernière_mise_à_jour_Base":"2026-11-24T16:35:36.000Z",
                    "Capacite":320,"_i":2730275881012141,"Id":3,"Nom":"THEATRE","_updatedAt":"2026-11-24T16:29:24.206Z",
@@ -29,6 +29,8 @@ class PoitiersParkingDtoDeserializationTest {
         PoitiersParkingListResponse response = mapper.readValue(json, PoitiersParkingListResponse.class);
 
         assertEquals(9, response.total());
+        assertEquals("https://data.grandpoitiers.fr/data-fair/api/v1/datasets/abc/lines?size=2&after=1%2C2",
+                response.next());
         assertEquals(2, response.results().size());
 
         PoitiersParkingDto theatre = response.results().get(0);
@@ -38,7 +40,6 @@ class PoitiersParkingDtoDeserializationTest {
         assertEquals(50, theatre.availableSpaces());
         assertEquals(84.375, theatre.occupancyRate());
         assertEquals("46.58383455409422, 0.33779491061805567", theatre.geopoint());
-        assertEquals(Instant.parse("2026-11-24T16:35:36.000Z"), theatre.lastUpdatedBase());
         assertEquals(Instant.parse("2026-11-24T16:29:24.206Z"), theatre.updatedAt());
 
         // Geo fields absent on some parkings -> null, no error

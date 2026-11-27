@@ -9,8 +9,8 @@ REST API built with Spring Boot exposing real-time parking availability near a g
 ## Structure
 
 ```
-parking-core/     → shared domain (entities, repositories, DTOs, ParkingSyncService)
-parking-poitiers/ → Poitiers integration (Feign, mapper, service) — depends on parking-core
+parking-core/     → shared domain (entities, repositories, DTOs), ParkingSource contract and generic synchronisation
+parking-poitiers/ → Poitiers ParkingSource (Feign client, DTOs, mapping to ParkingSnapshot) — depends on parking-core
 parking-app/      → Spring Boot application (REST, cron, config, Liquibase) — depends on both
 ```
 
@@ -97,20 +97,44 @@ Results are sorted by ascending distance. Each parking entry includes:
 - **Cron-based synchronisation**: data is cached in the database every 5 minutes (completely arbitrary, no thought given
   to this). The mobile API never depends on the availability of the external source — if the Poitiers API is down, the
   last known data continues to be served, and `lastUpdated` tells clients how old it is.
-- **Sync semantics**: the source is the reference. Parkings are upserted on the source's stable business key
-  (Poitiers `Id`, unique per city) — not on the data-fair `_id`, which is regenerated on every dataset refresh.
-  Parkings missing from the payload are deleted; an empty payload is treated as a source failure and the last known
-  data is kept. Invalid records (missing id/name, malformed coordinates) are skipped or stored without coordinates
-  individually, and each city is synced independently, so one failure never blocks the rest.
-- **No DB connection held during the remote call**: `PoitiersParkingSyncService` fetches the source outside of any
-  transaction, then delegates to `PoitiersParkingWriter`, whose `@Transactional` method updates the database. Two beans
-  rather than two methods of the same class, because Spring's proxy-based `@Transactional` is ignored on self-invocation.
-- **Configurable source**: the full Poitiers endpoint URL (`parking.poitiers.url`) and the Feign timeouts (connect 5 s,
-  read 10 s) are set in `application.properties`. If the source moves but keeps its format (dataset renamed, API
-  version bump, proxy...), only the configuration changes; a different format still requires a new DTO/mapper.
-- **Plugin registry (ParkingSyncService)**: each data source implements `ParkingSyncService`. The generic cron iterates
-  over all implementations detected by Spring. Adding a new city means creating a new module/package with its own Feign
-  client, mapper and service, and adding a value to the `CityName` enum — the REST layer is untouched.
+- **City sources as plugins (`ParkingSource`)**: a city only implements `ParkingSource` — `city()` and
+  `fetchParkings()`, which fetches its source and maps it to source-neutral `ParkingSnapshot`s. Everything else is
+  generic and lives in `parking-core`, so every city gets the same rules and safeguards for free: `ParkingSyncService`
+  orchestrates, `ParkingSnapshotWriter` validates and persists. The cron iterates over every `ParkingSource` bean.
+  Adding a city:
+  1. create a module (like `parking-poitiers`) with its client, DTOs and a `ParkingSource` implementation, in a package
+     under `com.instantsystem.parking` (component scan);
+  2. add the module as a dependency of `parking-app`;
+  3. add a value to the `CityName` enum.
+
+  The REST layer and the synchronisation are untouched.
+- **Sync semantics** (generic, in `ParkingSnapshotWriter`): the source is the reference. Parkings are upserted on the
+  source's stable business key (`externalId`, unique per city — for Poitiers the `Id` field, not the data-fair `_id`,
+  which is regenerated on every dataset refresh). The safeguards all aim at never deleting good data because of a
+  source problem:
+  - parkings no longer listed by the source are deleted, but a parking still listed with an invalid record (missing
+    name...) keeps its last known data;
+  - invalid records (missing key or name, duplicate key) are skipped individually; if **no** record is valid (e.g. the
+    source renamed its fields), nothing is written;
+  - an empty payload, or a source that cannot be fully read (exception), keeps the last known data;
+  - out-of-range coordinates are dropped (the parking is kept, but excluded from proximity search);
+  - each city is synced independently, so one failing source never blocks the others.
+- **Complete fetch (Poitiers)**: the data-fair `/lines` endpoint is paginated. `PoitiersParkingSource` requests the
+  first page from the configured URL (page size `parking.poitiers.page-size`, 1000 by default), then calls each page's
+  `next` URL as is until there is none, and fails if fewer lines than the announced `total` were fetched — an
+  incomplete list would otherwise delete the missing parkings. Following pages are requested on the URL given by the
+  source, so they would bypass a proxy configured in `parking.poitiers.url`; with a single page today (9 lines), this
+  was preferred for simplicity over rebuilding the URL from the `after` cursor.
+- **`lastUpdated`**: for Poitiers it is the data-fair `_updatedAt`. The dataset's own `Dernière_mise_à_jour_Base` was
+  observed several minutes in the future (source clock skew), which would give clients a negative data age. As a
+  generic safeguard, a `lastUpdated` in the future is capped to the sync time.
+- **No DB connection held during the remote call**: `ParkingSyncService` fetches the source outside of any transaction,
+  then delegates to `ParkingSnapshotWriter`, whose `@Transactional` method updates the database. Two beans rather than
+  two methods of the same class, because Spring's proxy-based `@Transactional` is ignored on self-invocation.
+- **Configurable source**: the full Poitiers endpoint URL (`parking.poitiers.url`), the page size and the Feign timeouts
+  (connect 5 s, read 10 s) are set in `application.properties`. If the source moves but keeps its format (dataset
+  renamed, API version bump, proxy...), only the configuration changes; a different format requires a new
+  `ParkingSource`.
 - **Read/write repository segregation**: `ParkingReadRepository` (extends `Repository`) only exposes queries;
   `ParkingWriteRepository` (extends `JpaRepository`) is the only way to modify parkings and is used by the
   synchronisation only. Same table, two distinct access contracts.
@@ -135,7 +159,7 @@ Results are sorted by ascending distance. Each parking entry includes:
   need to be pushed to PostgreSQL (via PostGIS or a SQL bounding box) for pagination to be truly effective. The response
   envelope already allows adding pagination metadata without breaking clients.
 - **CityName as configuration**: today adding a city requires extending the enum and writing code. A config-driven
-  approach (sources declared in `application.yml`) was explored but not retained. The fundamental constraint remains
+  approach (sources declared in `application.properties`) was explored but not retained. The fundamental constraint remains
   unchanged: each city has a different source API format, so each requires its own mapper and client — these are code
   decisions, not configuration. The only real gain would be if multiple cities shared the same format (e.g. all on
   OpenDataSoft): a generic adapter per format could be written, and new cities in that format would only need a yml

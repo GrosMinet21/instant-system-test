@@ -35,11 +35,11 @@ public class Parking {
 
     private Double longitude;
 
+    /**
+     * When the source last updated the availability.
+     */
     @Column
-    private Instant lastUpdatedBase;
-
-    @Column
-    private Instant sourceUpdatedAt;
+    private Instant lastUpdated;
 
     @ManyToOne
     @JoinColumn
@@ -109,20 +109,12 @@ public class Parking {
         this.longitude = longitude;
     }
 
-    public Instant getLastUpdatedBase() {
-        return lastUpdatedBase;
+    public Instant getLastUpdated() {
+        return lastUpdated;
     }
 
-    public void setLastUpdatedBase(Instant lastUpdatedBase) {
-        this.lastUpdatedBase = lastUpdatedBase;
-    }
-
-    public Instant getSourceUpdatedAt() {
-        return sourceUpdatedAt;
-    }
-
-    public void setSourceUpdatedAt(Instant sourceUpdatedAt) {
-        this.sourceUpdatedAt = sourceUpdatedAt;
+    public void setLastUpdated(Instant lastUpdated) {
+        this.lastUpdated = lastUpdated;
     }
 
     public City getCity() {
